@@ -1,0 +1,40 @@
+messages:
+  privacy:
+    message: "&d&lPrivacy: &rRead our privacy policy: &bhttps://novaserver.xyz/privacy"
+    link: "https://novaserver.xyz/privacy"
+    hover: "&fClick to read the privacy policy."
+  store:
+    message: "&3&lStore: &rDonate to the server at &bhttps://novaserver.xyz/store"
+    link: "https://novaserver.xyz/store"
+    hover: "&fClick to view the donation store."
+  ping:
+    your-ping: "&7Your current ping is &a%s ms&7."
+    others-ping: "&7%s's ping is &a%s ms&7."
+    not-online: "&cThat player isn't online."
+  discord:
+    message: "&b&lDiscord: &rJoin our Discord server: &bdiscord.gg/m52kfmbqAm"
+    link: "https://discord.gg/m52kfmbqAm"
+    hover: "&fClick to use the Discord invite."
+  map:
+    message: "&b&lMap: &rView the map at &bhttps://map.novaserver.xyz"
+    link: "https://map.novaserver.xyz"
+    hover: "&fClick to view the map."
+
+report:
+  webhook-enabled: false
+  webhook-url: ""
+  message: "&cReported &f%s &cto the admins!"
+  not-online: "&cThat player isn't online."
+  admin-message:
+    - "&f%name% &cwas reported by &e%reporter%"
+    - "&cFor the reason &f%reason%"
+
+hub:
+  server-name: 'lobby'
+  message: "&bSending you to the &chub&b..."
+  blacklist:
+    - ban
+    - kick
+
+protocol: "1.16.5"
+no-permission: "&cYou don't have access to that command."
