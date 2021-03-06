@@ -7,12 +7,16 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 import xyz.novaserver.gravity.util.Config;
 import xyz.novaserver.gravity.webhook.ReportWebhook;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
-public class ReportCommand extends Command {
+public class ReportCommand extends Command implements TabExecutor {
     private final ReportWebhook webhook;
 
     public ReportCommand() {
@@ -68,5 +72,18 @@ public class ReportCommand extends Command {
         }
 
         sender.sendMessage(reply);
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        List<String> playerNames = new ArrayList<>();
+        if (args.length == 1) {
+            Iterator<ProxiedPlayer> players = ProxyServer.getInstance().getPlayers().iterator();
+            while (players.hasNext()) {
+                playerNames.add(players.next().getName());
+            }
+        }
+
+        return playerNames;
     }
 }
