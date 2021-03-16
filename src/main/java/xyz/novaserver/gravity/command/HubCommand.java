@@ -1,24 +1,33 @@
 package xyz.novaserver.gravity.command;
 
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.Command;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.kyori.adventure.text.Component;
+import ninja.leaping.configurate.ConfigurationNode;
+import xyz.novaserver.gravity.Gravity;
 import xyz.novaserver.gravity.util.Config;
 
-public class HubCommand extends Command {
-    public HubCommand() {
-        super("hub", null, "lobby");
-    }
+import java.util.Optional;
+
+public class HubCommand implements SimpleCommand {
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
-        if (sender instanceof ProxiedPlayer) {
-            ((ProxiedPlayer) sender).connect(ProxyServer.getInstance().getServerInfo(Config.getString("hub.server-name")));
+    public void execute(Invocation invocation) {
+        CommandSource source = invocation.source();
+        ConfigurationNode hubNode = Config.getRoot().getNode("hub");
 
-            TextComponent message = new TextComponent(Config.getColoredString("hub.message"));
-            sender.sendMessage(message);
+        if (!(source instanceof Player)) {
+            return;
         }
+
+        String serverName = hubNode.getNode("server-name").getString();
+
+        Player player = (Player) source;
+        Optional<RegisteredServer> toConnect = Gravity.getInstance().getProxy().getServer(serverName);
+        player.createConnectionRequest(toConnect.get()).fireAndForget();
+
+        source.sendMessage(Component.text(hubNode.getNode("message").getString()));
     }
 }

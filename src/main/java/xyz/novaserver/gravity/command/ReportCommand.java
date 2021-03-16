@@ -1,89 +1,104 @@
 package xyz.novaserver.gravity.command;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.TabExecutor;
+import com.google.common.collect.ImmutableList;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.Types;
+import xyz.novaserver.gravity.Gravity;
 import xyz.novaserver.gravity.util.Config;
 import xyz.novaserver.gravity.webhook.ReportWebhook;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class ReportCommand extends Command implements TabExecutor {
-    private final ReportWebhook webhook;
+public class ReportCommand implements SimpleCommand {
+    private ReportWebhook webhook = null;
+    private final ConfigurationNode reportNode;
 
     public ReportCommand() {
-        super("report");
+        this.reportNode = Config.getRoot().getNode("report");
 
-        if (Config.getBoolean("report.webhook-enabled")) {
+        if (reportNode.getNode("webhook-enabled").getBoolean()) {
             webhook = new ReportWebhook();
         }
-        else {
-            webhook = null;
-        }
     }
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
-        TextComponent reply = new TextComponent();
+    public void execute(Invocation invocation) {
+        CommandSource source = invocation.source();
+        String[] args = invocation.arguments();
+        TextComponent.Builder text = Component.text();
 
-        if (!(sender instanceof ProxiedPlayer)) {
-            sender.sendMessage(new ComponentBuilder(ChatColor.RED + "This command can only be used by players.").create());
+        if (!(source instanceof Player)) {
             return;
         }
 
-        if (!sender.hasPermission("gravity.reports.report")) {
-            sender.sendMessage(new TextComponent(Config.getColoredString("no-permission")));
-            return;
+        if (args.length == 0) {
+            text.content("Usage: /report <player> <reason>").color(NamedTextColor.RED);
         }
-
-        if (args.length < 1) {
-            reply.setText(ChatColor.RED + "Usage: /report <player> <reason>");
+        else if (args.length == 1) {
+            text.content("Please provide a reason with your report!").color(NamedTextColor.RED);
         }
-        else if (args.length < 2) {
-            reply.setText(ChatColor.RED + "Please provide a reason with your report!");
-        }
-        else if (ProxyServer.getInstance().getPlayer(args[0]) == null) {
-            reply.setText(Config.getColoredString("report.not-online"));
+        else if (Gravity.getInstance().getProxy().getPlayer(args[0]).isEmpty()) {
+            text.content("That player isn't online.").color(NamedTextColor.RED);
         }
         else {
+            // Join arguments to put the reason into a string
             String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-            TextComponent message = new TextComponent(String.join("\n",
-                    Config.getColoredStringList("report.admin-message")).replaceAll("%name%", args[0])
-                    .replaceAll("%reporter%", sender.getName()).replaceAll("%reason%", reason));
 
+            // Set text for reply message
+            text.content(String.format(reportNode.getNode("message").getString(), args[0]));
+
+            // Send the report to the webhook
             if (webhook != null) {
-                webhook.sendReport(ProxyServer.getInstance().getPlayer(args[0]), reason, sender.getName());
-            }
-            for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
-                if (player.hasPermission("gravity.reports.notify")) {
-                    player.sendMessage(message);
-                }
+                webhook.sendReport(args[0],
+                        Gravity.getInstance().getProxy().getPlayer(args[0]).get().getUniqueId().toString(), reason,
+                        ((Player) source).getUsername());
             }
 
-            reply.setText(String.format(Config.getColoredString("report.message"), args[0]));
+            // Create the admin report message
+            TextComponent.Builder adminText = Component.text();
+            adminText.content(String.join("\n", reportNode.getNode("admin-message").getList(Types::asString))
+                    .replaceAll("%name%", args[0]).replaceAll("%reason%", reason)
+                    .replaceAll("%reporter%", ((Player) source).getUsername()));
+
+            // Send report to all players with notify permission
+            Gravity.getInstance().getProxy().getAllPlayers().stream()
+                    .filter(player -> player.hasPermission("gravity.reports.notify"))
+                    .forEach(player -> player.sendMessage(adminText));
         }
 
-        sender.sendMessage(reply);
+        source.sendMessage(text);
     }
 
     @Override
-    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        List<String> playerNames = new ArrayList<>();
-        if (args.length == 1) {
-            Iterator<ProxiedPlayer> players = ProxyServer.getInstance().getPlayers().iterator();
-            while (players.hasNext()) {
-                playerNames.add(players.next().getName());
-            }
-        }
+    public List<String> suggest(Invocation invocation) {
+        String[] args = invocation.arguments();
+        Stream<String> possibilities = Gravity.getInstance().getProxy().getAllPlayers()
+                .stream().map(Player::getUsername);
 
-        return playerNames;
+        if (args.length == 0) {
+            return possibilities.collect(Collectors.toList());
+        }
+        else if (args.length == 1) {
+            return possibilities
+                    .filter(name -> name.regionMatches(true, 0, args[0], 0, args[0].length()))
+                    .collect(Collectors.toList());
+        }
+        else {
+            return ImmutableList.of();
+        }
+    }
+
+    @Override
+    public boolean hasPermission(Invocation invocation) {
+        return invocation.source().hasPermission("gravity.reports.report");
     }
 }

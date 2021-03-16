@@ -4,16 +4,19 @@ plugins {
 }
 
 group 'xyz.novaserver'
-version '1.0-SNAPSHOT'
+version '0.1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
     jcenter()
-    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven {
+        name 'velocity'
+        url 'https://nexus.velocitypowered.com/repository/maven-public/'
+    }
 }
 
 dependencies {
-    compileOnly 'net.md-5:bungeecord-api:1.16-R0.5-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:1.1.4'
+    annotationProcessor 'com.velocitypowered:velocity-api:1.1.4'
     compile 'club.minnced:discord-webhooks:0.5.5-rc'
 }

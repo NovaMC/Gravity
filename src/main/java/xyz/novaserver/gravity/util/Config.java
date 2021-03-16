@@ -1,77 +1,51 @@
 package xyz.novaserver.gravity.util;
 
 import com.google.common.io.ByteStreams;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 import xyz.novaserver.gravity.Gravity;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
 
 public class Config {
-    private static Configuration config;
+    private static ConfigurationNode rootNode;
 
-    public static void loadConfig() {
-        if (!Gravity.getGravity().getDataFolder().exists()) {
-            Gravity.getGravity().getDataFolder().mkdir();
+    public static boolean loadConfig(Path dataDirectory) {
+        File configFile = new File(dataDirectory.toFile(), "config.yml");
+
+        if (!configFile.getParentFile().exists()) {
+            configFile.getParentFile().mkdirs();
         }
-
-        File configFile = new File(Gravity.getGravity().getDataFolder(), "config.yml");
 
         if (!configFile.exists()) {
             try {
                 configFile.createNewFile();
-                try (InputStream is = Gravity.getGravity().getResourceAsStream("config.yml");
-                     OutputStream os = new FileOutputStream(configFile)) {
+                try (InputStream is = Gravity.getInstance().getClass().getResourceAsStream("/" + configFile.getName());
+                    OutputStream os = new FileOutputStream(configFile)) {
                     ByteStreams.copy(is, os);
                 }
             }
-
             catch (IOException e) {
-                throw new RuntimeException("Unable to create the configuration file", e);
+                e.printStackTrace();
+                return false;
             }
         }
 
+        YAMLConfigurationLoader loader = YAMLConfigurationLoader.builder().setPath(configFile.toPath()).build();
+
         try {
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class)
-                    .load(new File(Gravity.getGravity().getDataFolder(), "config.yml"));
-        } catch (IOException e) {
+            rootNode = loader.load();
+            return true;
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
-    public static boolean getBoolean(String location) {
-        return config.getBoolean(location, false);
-    }
-
-    public static String getString(String location) {
-        return config.getString(location, "");
-    }
-
-    public static List<String> getStringList(String location) {
-        return config.getStringList(location);
-    }
-
-    public static int getInteger(String location) {
-        return config.getInt(location, 0);
-    }
-
-    public static double getDouble(String location) {
-        return config.getDouble(location, 0.0);
-    }
-
-    public static String getColoredString(String location) {
-        return ChatColor.translateAlternateColorCodes('&', getString(location));
-    }
-
-    public static List<String> getColoredStringList(String location) {
-        List<String> list = new ArrayList<>();
-        for (String s : getStringList(location)) {
-            list.add(ChatColor.translateAlternateColorCodes('&', s));
-        }
-        return list;
+    public static ConfigurationNode getRoot() {
+        return rootNode;
     }
 }

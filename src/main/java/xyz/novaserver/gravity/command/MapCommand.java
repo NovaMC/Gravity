@@ -1,25 +1,26 @@
 package xyz.novaserver.gravity.command;
 
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.plugin.Command;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import ninja.leaping.configurate.ConfigurationNode;
 import xyz.novaserver.gravity.util.Config;
 
-public class MapCommand extends Command {
-    public MapCommand() {
-        super("map");
-    }
+public class MapCommand implements SimpleCommand {
 
     @Override
-    public void execute(CommandSender sender, String[] args) {
-        TextComponent message = new TextComponent(Config.getColoredString("messages.map.message"));
-        message.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Config.getString("messages.map.link")));
-        message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new ComponentBuilder(Config.getColoredString("messages.map.hover")).create()));
+    public void execute(Invocation invocation) {
+        CommandSource source = invocation.source();
+        ConfigurationNode mapNode = Config.getRoot().getNode("map");
 
-        sender.sendMessage(message);
+        TextComponent.Builder text = Component.text();
+        text.content(mapNode.getNode("message").getString());
+        text.clickEvent(ClickEvent.openUrl(mapNode.getNode("link").getString()));
+        text.hoverEvent(HoverEvent.showText(Component.text(mapNode.getNode("hover").getString())));
+
+        source.sendMessage(text.build());
     }
 }
