@@ -2,20 +2,25 @@ privacy:
   message: "§d§lPrivacy: §rRead our privacy policy: §bhttps://novaserver.xyz/privacy"
   link: "https://novaserver.xyz/privacy"
   hover: "§fClick to read the privacy policy."
+  enabled: true
 store:
   message: "§3§lStore: §rDonate to the server at §bhttps://novaserver.xyz/store"
   link: "https://novaserver.xyz/store"
   hover: "§fClick to view the donation store."
+  enabled: true
 discord:
   message: "§b§lDiscord: §rJoin our Discord server: §bdiscord.gg/m52kfmbqAm"
   link: "https://discord.gg/m52kfmbqAm"
   hover: "§fClick to use the Discord invite."
+  enabled: true
 map:
   message: "§b§lMap: §rView the map at §bhttps://map.novaserver.xyz"
   link: "https://map.novaserver.xyz"
   hover: "§fClick to view the map."
+  enabled: true
 
 report:
+  enabled: true
   webhook-enabled: false
   webhook-url: ""
   avatar-url: "https://crafatar.com/avatars/%s.png"
@@ -25,5 +30,6 @@ report:
     - "§cFor the reason §f%reason%"
 
 hub:
+  enabled: true
   server-name: 'lobby'
   message: "§bSending you to the §chub§b..."

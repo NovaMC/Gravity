@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import ninja.leaping.configurate.ConfigurationNode;
 import org.slf4j.Logger;
 import xyz.novaserver.gravity.command.*;
 import xyz.novaserver.gravity.util.Config;
@@ -35,20 +36,30 @@ public class Gravity {
             logger.error("Failed to load Gravity config file!");
         }
 
-        proxy.getCommandManager().register("discord", new DiscordCommand());
-        proxy.getCommandManager().register("map", new MapCommand());
-        proxy.getCommandManager().register("privacy", new PrivacyCommand());
-        proxy.getCommandManager().register("report", new ReportCommand());
-        proxy.getCommandManager().register("hub", new HubCommand(), "lobby");
-        proxy.getCommandManager().register("store", new StoreCommand(), "donate");
+        ConfigurationNode config = Config.getRoot();
+
+        if (config.getNode("discord").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("discord", new DiscordCommand());
+        }
+        if (config.getNode("map").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("map", new MapCommand());
+        }
+        if (config.getNode("privacy").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("privacy", new PrivacyCommand());
+        }
+        if (config.getNode("report").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("report", new ReportCommand());
+        }
+        if (config.getNode("hub").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("hub", new HubCommand(), "lobby");
+        }
+        if (config.getNode("store").getNode("enabled").getBoolean()) {
+            proxy.getCommandManager().register("store", new StoreCommand(), "donate");
+        }
     }
 
     public ProxyServer getProxy() {
         return proxy;
-    }
-
-    public Logger getLogger() {
-        return logger;
     }
 
     public static Gravity getInstance() {

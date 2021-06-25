@@ -99,6 +99,6 @@ public class ReportCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("gravity.reports.report");
+        return invocation.source().hasPermission("gravity.command.report");
     }
 }
