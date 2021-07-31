@@ -3,17 +3,26 @@ package xyz.novaserver.gravity;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.slf4j.Logger;
 import xyz.novaserver.gravity.command.*;
+import xyz.novaserver.gravity.listener.BedrockJoinListener;
+import xyz.novaserver.gravity.queue.QueueHandler;
 import xyz.novaserver.gravity.util.Config;
 
 import java.nio.file.Path;
 
-@Plugin(id = "gravity", name = "Gravity", version = "0.1.0", authors = {"Lui798"})
+@Plugin(id = "gravity",
+        name = "Gravity",
+        version = "0.1.1",
+        authors = {"Lui798"},
+        dependencies = {
+                @Dependency(id = "floodgate", optional = true)
+        })
 public class Gravity {
     private static Gravity gravity;
 
@@ -44,9 +53,6 @@ public class Gravity {
         if (config.getNode("map").getNode("enabled").getBoolean()) {
             proxy.getCommandManager().register("map", new MapCommand());
         }
-        if (config.getNode("privacy").getNode("enabled").getBoolean()) {
-            proxy.getCommandManager().register("privacy", new PrivacyCommand());
-        }
         if (config.getNode("report").getNode("enabled").getBoolean()) {
             proxy.getCommandManager().register("report", new ReportCommand());
         }
@@ -55,6 +61,14 @@ public class Gravity {
         }
         if (config.getNode("store").getNode("enabled").getBoolean()) {
             proxy.getCommandManager().register("store", new StoreCommand(), "donate");
+        }
+
+        if (config.getNode("bedrock").getNode("enabled").getBoolean()
+                && getProxy().getPluginManager().isLoaded("floodgate")) {
+            getProxy().getEventManager().register(this, new BedrockJoinListener());
+        }
+        if (config.getNode("rejoin").getNode("enabled").getBoolean()) {
+            new QueueHandler(this);
         }
     }
 
