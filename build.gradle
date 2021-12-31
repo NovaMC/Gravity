@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'xyz.novaserver'
-version '0.1.1-SNAPSHOT'
+version '0.1.2-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -19,5 +19,4 @@ dependencies {
     compileOnly 'com.velocitypowered:velocity-api:3.0.0'
     annotationProcessor 'com.velocitypowered:velocity-api:3.0.0'
     compileOnly 'org.geysermc.floodgate:api:2.0-SNAPSHOT'
-    compile 'club.minnced:discord-webhooks:0.5.7'
 }

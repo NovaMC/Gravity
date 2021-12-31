@@ -29,13 +29,5 @@ hub:
   server-name: 'lobby'
   message: "§bSending you to the §chub§b..."
 
-bedrock:
+proxy-cmd:
   enabled: false
-  first-server: "fallback"
-  to-server: "survival"
-
-rejoin:
-  enabled: false
-  fallback: "fallback"
-  new-server: "survival"
-  message: "§dServer is back online! You will be reconnected in §b%s §dseconds."
