@@ -56,6 +56,7 @@ public class Gravity {
         if (config.getNode("proxy-cmd").getNode("enabled").getBoolean()) {
             proxy.getEventManager().register(this, new GravityPluginMessageHandler(this));
         }
+        proxy.getCommandManager().register("send", new SendCommand());
     }
 
     public ProxyServer getProxy() {
