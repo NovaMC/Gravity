@@ -18,5 +18,5 @@ repositories {
 dependencies {
     compileOnly 'com.velocitypowered:velocity-api:3.0.0'
     annotationProcessor 'com.velocitypowered:velocity-api:3.0.0'
-    compileOnly 'org.geysermc.floodgate:api:2.0-SNAPSHOT'
+    compileOnly 'org.geysermc.floodgate:api:2.2.0-SNAPSHOT'
 }

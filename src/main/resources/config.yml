@@ -31,3 +31,8 @@ hub:
 
 proxy-cmd:
   enabled: false
+
+# Have players wait in limbo until their resource pack is loaded
+resource-pack-limbo:
+  enabled: false
+  limbo-server: "limbo"
