@@ -61,6 +61,7 @@ public class Gravity {
         if (config.getNode("resource-pack-limbo", "enabled").getBoolean()) {
             new LimboFeature(this); //Should do this in a nicer way
         }
+        proxy.getCommandManager().register("send", new SendCommand());
     }
 
     public ProxyServer getProxy() {
