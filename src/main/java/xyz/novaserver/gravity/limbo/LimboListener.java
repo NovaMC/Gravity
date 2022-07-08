@@ -10,7 +10,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import org.geysermc.floodgate.api.FloodgateApi;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class LimboListener {
@@ -32,8 +31,9 @@ public class LimboListener {
         }
 
         // Store initial resource pack status
-        if (!limbo.hasData(uuid)) {
-            limbo.createData(uuid).rpStatus(player.getAppliedResourcePack() != null);
+        final LimboData limboData = limbo.getLimboData();
+        if (!limboData.hasStatus(uuid)) {
+            limboData.createStatus(uuid).rpStatus(player.getAppliedResourcePack() != null);
         }
     }
 
@@ -47,42 +47,45 @@ public class LimboListener {
             return;
         }
 
-        LimboFeature.LimboData data = limbo.getData(uuid);
+        final LimboData.Status status = limbo.getLimboData().getStatus(uuid);
         // Send to limbo if resource pack not applied
-        if (!data.rpStatus()) {
+        if (limbo.isLimboOnline() && !status.rpStatus()) {
             // Store the current server for later use
-            event.getResult().getServer().ifPresent(data::toConnect);
+            event.getResult().getServer().ifPresent(status::toConnect);
 
             // Send player to limbo
-            final Optional<RegisteredServer> limboServer = limbo.getGravity()
-                    .getProxy().getServer(limbo.getLimboServer());
-            limboServer.ifPresent(server -> event.setResult(ServerPreConnectEvent.ServerResult.allowed(server)));
+            final RegisteredServer limboServer = limbo.getLimboServer();
+            event.setResult(ServerPreConnectEvent.ServerResult.allowed(limboServer));
         }
     }
 
     @Subscribe
     public void onPlayerDisconnect(DisconnectEvent event) {
         // Remove limbo data on disconnect
-        limbo.removeData(event.getPlayer().getUniqueId());
+        limbo.getLimboData().removeStatus(event.getPlayer().getUniqueId());
     }
 
     @Subscribe
     public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
-        final Status status = event.getStatus();
         final Player player = event.getPlayer();
-        final UUID uuid = player.getUniqueId();
+        final LimboData limboData = limbo.getLimboData();
 
         // Should be impossible
-        if (!limbo.hasData(player.getUniqueId())) {
+        if (!limboData.hasStatus(player.getUniqueId())) {
             return;
         }
 
-        LimboFeature.LimboData data = limbo.getData(uuid);
-        if (status == Status.SUCCESSFUL) {
-            data.rpStatus(true);
-            player.createConnectionRequest(data.toConnect()).fireAndForget();
+        LimboData.Status status = limboData.getStatus(player.getUniqueId());
+        if (event.getStatus() == Status.SUCCESSFUL) {
+            status.rpStatus(true);
+            // Connect player to the server they would have connected to if they are currently in limbo
+            player.getCurrentServer().ifPresent(connection -> {
+                if (connection.getServer().equals(limbo.getLimboServer())) {
+                    player.createConnectionRequest(status.toConnect()).fireAndForget();
+                }
+            });
         } else {
-            data.rpStatus(false);
+            status.rpStatus(false);
         }
     }
 }

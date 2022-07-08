@@ -1,22 +1,36 @@
 package xyz.novaserver.gravity.limbo;
 
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import ninja.leaping.configurate.ConfigurationNode;
 import xyz.novaserver.gravity.Gravity;
 import xyz.novaserver.gravity.util.Config;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.time.Duration;
 
 public class LimboFeature {
     private final Gravity gravity;
-    private final String limboServer;
+    private final LimboData limboData;
 
-    private final Map<UUID, LimboData> limboData = new HashMap<>();
+    private final String limboServerName;
+    private RegisteredServer limboServer;
+    private boolean limboOnline = false;
 
     public LimboFeature(Gravity gravity) {
         this.gravity = gravity;
-        limboServer = Config.getRoot().getNode("resource-pack-limbo", "limbo-server").getString();
+        limboData = new LimboData();
+
+        ConfigurationNode limboNode = Config.getRoot().getNode("resource-pack-limbo");
+
+        limboServerName = limboNode.getNode("limbo-server").getString("limbo");
+        loadLimboServer();
+        gravity.getProxy().getScheduler()
+                .buildTask(gravity, this::runLimboOnlineCheck)
+                .delay(Duration.ofSeconds(1))
+                .repeat(Duration.ofSeconds(limboNode.getNode("online-check").getLong(30)))
+                .schedule();
+
         gravity.getProxy().getEventManager().register(gravity, new LimboListener(this));
     }
 
@@ -24,49 +38,40 @@ public class LimboFeature {
         return gravity;
     }
 
-    public String getLimboServer() {
+    public LimboData getLimboData() {
+        return limboData;
+    }
+
+    public RegisteredServer getLimboServer() {
         return limboServer;
     }
 
-    public LimboData getData(UUID uuid) {
-        return limboData.get(uuid);
+    public boolean isLimboOnline() {
+        return limboOnline;
     }
 
-    public boolean hasData(UUID uuid) {
-        return limboData.containsKey(uuid);
+    @Subscribe
+    public void onProxyReload(ProxyReloadEvent event) {
+        loadLimboServer();
     }
 
-    public LimboData createData(UUID uuid) {
-        limboData.put(uuid, new LimboData());
-        return limboData.get(uuid);
+    private void runLimboOnlineCheck() {
+        if (limboServer != null) {
+            limboServer.ping().whenComplete((serverPing, throwable) -> {
+                if (throwable != null && limboOnline) {
+                    gravity.getLogger().warn("Limbo server went offline!", throwable);
+                    limboOnline = false;
+                } else if (throwable == null && !limboOnline) {
+                    gravity.getLogger().info("Limbo server is back online!");
+                    limboOnline = true;
+                }
+            });
+        } else {
+            limboOnline = false;
+        }
     }
 
-    public void removeData(UUID uuid) {
-        limboData.remove(uuid);
-    }
-
-    public static class LimboData {
-        private boolean rpStatus;
-        private RegisteredServer toConnect;
-
-        private LimboData() {}
-
-        public boolean rpStatus() {
-            return rpStatus;
-        }
-
-        public LimboData rpStatus(boolean rpStatus) {
-            this.rpStatus = rpStatus;
-            return this;
-        }
-
-        public RegisteredServer toConnect() {
-            return toConnect;
-        }
-
-        public LimboData toConnect(RegisteredServer toConnect) {
-            this.toConnect = toConnect;
-            return this;
-        }
+    private void loadLimboServer() {
+        limboServer = gravity.getProxy().getServer(limboServerName).orElse(null);
     }
 }

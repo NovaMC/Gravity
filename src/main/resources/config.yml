@@ -35,4 +35,5 @@ proxy-cmd:
 # Have players wait in limbo until their resource pack is loaded
 resource-pack-limbo:
   enabled: false
+  online-check: 30 # Seconds between checking if the limbo server is online
   limbo-server: "limbo"

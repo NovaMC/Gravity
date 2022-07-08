@@ -58,7 +58,7 @@ public class Gravity {
         if (config.getNode("proxy-cmd", "enabled").getNode().getBoolean()) {
             proxy.getEventManager().register(this, new GravityPluginMessageHandler(this));
         }
-        if (config.getNode("resource-pack-limbo", "enabled").getBoolean()) {
+        if (config.getNode("resource-pack-limbo", "enabled").getBoolean(false)) {
             new LimboFeature(this); //Should do this in a nicer way
         }
         proxy.getCommandManager().register("send", new SendCommand());
@@ -66,6 +66,10 @@ public class Gravity {
 
     public ProxyServer getProxy() {
         return proxy;
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 
     public static Gravity getInstance() {
