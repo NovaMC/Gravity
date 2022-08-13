@@ -33,6 +33,7 @@ public class LimboListener {
         // Store initial resource pack status
         final LimboData limboData = limbo.getLimboData();
         if (!limboData.hasStatus(uuid)) {
+            // Create status on login
             limboData.createStatus(uuid).rpStatus(player.getAppliedResourcePack() != null);
         }
     }
@@ -47,7 +48,14 @@ public class LimboListener {
             return;
         }
 
-        final LimboData.Status status = limbo.getLimboData().getStatus(uuid);
+        final LimboData limboData = limbo.getLimboData();
+        // We have to check and create status here because
+        // this can somehow be called before PostLoginEvent
+        if (!limboData.hasStatus(player.getUniqueId())) {
+            limboData.createStatus(uuid).rpStatus(player.getAppliedResourcePack() != null);
+        }
+
+        final LimboData.Status status = limboData.getStatus(uuid);
         // Send to limbo if resource pack not applied
         if (limbo.isLimboOnline() && !status.rpStatus()) {
             // Store the current server for later use
@@ -68,14 +76,15 @@ public class LimboListener {
     @Subscribe
     public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
         final Player player = event.getPlayer();
+        final UUID uuid = player.getUniqueId();
         final LimboData limboData = limbo.getLimboData();
 
         // Should be impossible
-        if (!limboData.hasStatus(player.getUniqueId())) {
+        if (!limboData.hasStatus(uuid)) {
             return;
         }
 
-        LimboData.Status status = limboData.getStatus(player.getUniqueId());
+        LimboData.Status status = limboData.getStatus(uuid);
         if (event.getStatus() == Status.SUCCESSFUL) {
             status.rpStatus(true);
             // Connect player to the server they would have connected to if they are currently in limbo
